@@ -1,7 +1,7 @@
 # Личный проект «Кексобукинг» [![Build status][travis-image]][travis-url]
 
 * Студент: [Anna](https://up.htmlacademy.ru/javascript/13/user/461295).
-* Наставник: `Неизвестно`.
+* Наставник: `Unknown Jedi`.
 
 ---
 
