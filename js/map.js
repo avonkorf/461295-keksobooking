@@ -126,7 +126,7 @@ var createAds = function (dataofAd) {
 // Создание DOM-элемента метки с использованием шаблона на основе объекта объявления
 var createPinElement = function (objectAd) {
   var pinElement = document.querySelector('template').content
-    .querySelector('.map__pin').cloneNode(true);
+      .querySelector('.map__pin').cloneNode(true);
   var picture = pinElement.querySelector('img');
 
   picture.src = objectAd.author.avatar;
@@ -152,10 +152,10 @@ var renderPinFragment = function (arrayPins) {
 var renderCardFragment = function (objectOfAd, dictionaryType) {
   var fragment = document.createDocumentFragment();
   var newElement = document.querySelector('template').content
-    .querySelector('.map__card').cloneNode(true);
+      .querySelector('.map__card').cloneNode(true);
 
   newElement.querySelector('.popup__title').textContent = objectOfAd
-    .offer.title;
+      .offer.title;
   newElement.querySelector('.popup__text--address').textContent = objectOfAd.offer.address;
   newElement.querySelector('.popup__text--price').textContent = objectOfAd.offer.price + '₽/ночь';
   newElement.querySelector('.popup__type').textContent = dictionaryType[objectOfAd.offer.type];
@@ -171,7 +171,7 @@ var renderCardFragment = function (objectOfAd, dictionaryType) {
 
   for (i = 0; i < objectOfAd.offer.features.length; i++) {
     newElement.querySelector('.popup__feature--' + objectOfAd.offer.features[i])
-      .classList.remove('visually-hidden');
+        .classList.remove('visually-hidden');
   }
 
   newElement.querySelector('.popup__description').textContent = objectOfAd.offer.description;
