@@ -48,6 +48,14 @@ var DICTIONARY_TYPE = {
   'palace': 'Дворец'
 };
 
+var sectionMap = document.querySelector('.map');
+var divMapPin = document.querySelector('.map__pins');
+var formAd = document.querySelector('.ad-form');
+var elementTemplate = document.querySelector('template');
+var fieldsetsFormAd = formAd.querySelectorAll('fieldset');
+var elementFormAddress = formAd.querySelector('#address');
+var buttonMainPin = sectionMap.querySelector('.map__pin--main');
+
 // Генерация случайных чисел от min до max
 var getRandomNumber = function (min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -67,17 +75,17 @@ var getRandomArray = function (array) {
 
 // Перемешивание массива без изменения исходного массива
 var shuffleArray = function (array) {
-  var assistent = [];
+  var assistentArray = [];
   var newArray = [];
 
   for (var i = 0; i < array.length; i++) {
-    assistent.push(array[i]);
+    assistentArray.push(array[i]);
   }
 
   for (i = 0; i < array.length; i++) {
-    var newIndex = getRandomNumber(0, assistent.length - 1);
-    newArray[i] = assistent[newIndex];
-    assistent.splice(newIndex, 1);
+    var newIndex = getRandomNumber(0, assistentArray.length - 1);
+    newArray[i] = assistentArray[newIndex];
+    assistentArray.splice(newIndex, 1);
   }
 
   return newArray;
@@ -113,26 +121,25 @@ var createAd = function (numberOfAds, dataOfAd) {
 };
 
 // Формирование массива объектов объявлений
-var createAds = function (dataofAd) {
-  var ads = [];
+var createAds = function (data) {
+  var newAds = [];
 
-  for (var i = dataofAd.quantity.low; i <= dataofAd.quantity.high; i++) {
-    ads.push(createAd(i, dataofAd));
+  for (var i = data.quantity.low; i <= data.quantity.high; i++) {
+    newAds.push(createAd(i, data));
   }
 
-  return ads;
+  return newAds;
 };
 
 // Создание DOM-элемента метки с использованием шаблона на основе объекта объявления
 var createPinElement = function (objectAd) {
-  var pinElement = document.querySelector('template').content
-      .querySelector('.map__pin').cloneNode(true);
+  var pinElement = elementTemplate.content.querySelector('.map__pin').cloneNode(true);
   var picture = pinElement.querySelector('img');
 
   picture.src = objectAd.author.avatar;
   picture.alt = objectAd.offer.title;
-  pinElement.style.left = objectAd.location.x - parseInt(picture.width / 2, 10) + 'px';
-  pinElement.style.top = objectAd.location.y - parseInt(picture.height, 10) + 'px';
+  pinElement.style.left = objectAd.location.x + parseInt(picture.width / 2, 10) + 'px';
+  pinElement.style.top = objectAd.location.y + parseInt(picture.height, 10) + 'px';
 
   return pinElement;
 };
@@ -151,8 +158,7 @@ var renderPinFragment = function (arrayPins) {
 //  Создание DOM-элемента объявления с использованием шаблона на основе объекта объявления
 var renderCardFragment = function (objectOfAd, dictionaryType) {
   var fragment = document.createDocumentFragment();
-  var newElement = document.querySelector('template').content
-      .querySelector('.map__card').cloneNode(true);
+  var newElement = elementTemplate.content.querySelector('.map__card').cloneNode(true);
 
   newElement.querySelector('.popup__title').textContent = objectOfAd
       .offer.title;
@@ -192,15 +198,86 @@ var renderCardFragment = function (objectOfAd, dictionaryType) {
   return fragment;
 };
 
-// Создание массива меток
-var ads = createAds(INITIAL_DATA);
+// Активация / Деактивация полей
+var deactivateElements = function (elements, isNotActive) {
+  for (var i = 0; i < elements.length; i++) {
+    elements[i].disabled = isNotActive;
+  }
+};
 
-// У блока .map удаление класса .map--faded
-var map = document.querySelector('.map');
-map.classList.remove('map--faded');
+// Активация страницы
+var activatePage = function () {
+  sectionMap.classList.remove('map--faded');
+  formAd.classList.remove('ad-form--disabled');
+  deactivateElements(fieldsetsFormAd, false);
+};
 
-// Отрисовка сгенерированных DOM-элементов меток в блок .map__pins
-document.querySelector('.map__pins').appendChild(renderPinFragment(ads));
+// Определение адреса
+var defineFormAddress = function (element, isNotActive) {
+  var picture = element.querySelector('img');
+  var coordX = parseInt(element.style.left, 10) + Math.ceil(picture.width / 2);
+  var coordY = parseInt(element.style.top, 10);
 
-// Отрисовка DOM-элемента объявления  в блок .map перед блоком.map__filters-container
-map.insertBefore(renderCardFragment(ads[0], DICTIONARY_TYPE), map.querySelector('.map__filters-container'));
+  coordY += Math.ceil(picture.height / 2);
+
+  if (isNotActive) {
+    coordY += picture.height;
+  }
+
+  return coordX + ', ' + coordY;
+};
+
+var removeArticle = function (article) {
+  if (article) {
+    sectionMap.removeChild(article);
+  }
+};
+
+var openPopupAd = function (dataOfAd) {
+  var articleAd = sectionMap.querySelector('.map__card');
+  removeArticle(articleAd);
+  sectionMap.insertBefore(renderCardFragment(dataOfAd, DICTIONARY_TYPE), sectionMap.querySelector('.map__filters-container'));
+};
+
+var closePopupAd = function () {
+  var articleAd = sectionMap.querySelector('.map__card');
+  var buttonToClosePopup = articleAd.querySelector('.popup__close');
+  buttonToClosePopup.addEventListener('click', function () {
+    removeArticle(articleAd);
+  });
+};
+
+var addClickListener = function (element, ad) {
+  element.addEventListener('click', function () {
+    openPopupAd(ad);
+    closePopupAd();
+  });
+};
+
+var showPins = function () {
+  // Создание массива меток
+  var ads = createAds(INITIAL_DATA);
+  // Отрисовка сгенерированных DOM-элементов меток в блок .map__pins
+  divMapPin.appendChild(renderPinFragment(ads));
+  // Отбор созданных меток
+  var pins = divMapPin.querySelectorAll('.map__pin');
+  // Добавление обработчиков на созданные метки
+  // На данном этапе принимаем, что объявления в массиве хранятся в порядке отрисовки меток
+  for (var i = 1; i < pins.length; i++) {
+    addClickListener(pins[i], ads[i - 1]);
+  }
+};
+
+var onButtonMainPinMouseup = function () {
+  activatePage();
+  elementFormAddress.value = defineFormAddress(buttonMainPin, false);
+  buttonMainPin.removeEventListener('mouseup', onButtonMainPinMouseup);
+  showPins();
+};
+
+// Предварительная деактивация полей формы
+deactivateElements(fieldsetsFormAd, true);
+// Определение адреса по умолчанию по координатам главной метки
+elementFormAddress.value = defineFormAddress(buttonMainPin, true);
+// Обработчик события mouseup главной метки
+buttonMainPin.addEventListener('mouseup', onButtonMainPinMouseup);
