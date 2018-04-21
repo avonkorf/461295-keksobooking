@@ -48,13 +48,39 @@ var DICTIONARY_TYPE = {
   'palace': 'Дворец'
 };
 
+var MIN_PRICE_TYPE_PRICE = {
+  'bungalo': 0,
+  'flat': 1000,
+  'house': 5000,
+  'palace': 10000
+};
+
+var URL = 'https://js.dump.academy/keksobooking';
+
+var PAGE_MODE = false;
+var ENTER_KEY = 13;
+
 var sectionMap = document.querySelector('.map');
 var divMapPin = document.querySelector('.map__pins');
 var formAd = document.querySelector('.ad-form');
 var elementTemplate = document.querySelector('template');
-var fieldsetsFormAd = formAd.querySelectorAll('fieldset');
-var elementFormAddress = formAd.querySelector('#address');
+var divSuccess = document.querySelector('.success');
 var buttonMainPin = sectionMap.querySelector('.map__pin--main');
+var fieldsetsFormAd = formAd.querySelectorAll('fieldset');
+var inputAddress = formAd.querySelector('#address');
+var inputPrice = formAd.querySelector('#price');
+var inputTimeIn = formAd.querySelector('#timein');
+var inputTimeOut = formAd.querySelector('#timeout');
+var selectType = formAd.querySelector('#type');
+var selectRoomNumber = formAd.querySelector('#room_number');
+var selectCapacity = formAd.querySelector('#capacity');
+var buttonSubmit = formAd.querySelector('.ad-form__submit');
+var buttonReset = formAd.querySelector('.ad-form__reset');
+
+var buttonMainPinInitialCoords = {
+  x: '570px',
+  y: '375px'
+};
 
 // Генерация случайных чисел от min до max
 var getRandomNumber = function (min, max) {
@@ -205,31 +231,53 @@ var deactivateElements = function (elements, isNotActive) {
   }
 };
 
-// Активация страницы
-var activatePage = function () {
-  sectionMap.classList.remove('map--faded');
-  formAd.classList.remove('ad-form--disabled');
-  deactivateElements(fieldsetsFormAd, false);
-};
-
 // Определение адреса
-var defineFormAddress = function (element, isNotActive) {
+var defineFormAddress = function (element, isActive) {
   var picture = element.querySelector('img');
   var coordX = parseInt(element.style.left, 10) + Math.ceil(picture.width / 2);
-  var coordY = parseInt(element.style.top, 10);
+  var coordY = parseInt(element.style.top, 10) + Math.ceil(picture.height / 2);
 
-  coordY += Math.ceil(picture.height / 2);
-
-  if (isNotActive) {
-    coordY += picture.height;
+  if (isActive) {
+    coordX = parseInt(buttonMainPinInitialCoords.x, 10) + parseInt(picture.width, 10);
+    coordY = parseInt(buttonMainPinInitialCoords.y, 10) + parseInt(picture.height, 10);
   }
 
-  return coordX + ', ' + coordY;
+  inputAddress.value = coordX + ', ' + coordY;
 };
 
 var removeArticle = function (article) {
   if (article) {
     sectionMap.removeChild(article);
+  }
+};
+
+var listenMainPin = function () {
+  buttonMainPin.addEventListener('mouseup', onButtonMainPinMouseup);
+};
+
+// Активация страницы
+var changePageMode = function (isActive) {
+  if (isActive) {
+    defineFormAddress(buttonMainPin, isActive);
+    sectionMap.classList.remove('map--faded');
+    formAd.classList.remove('ad-form--disabled');
+    deactivateElements(fieldsetsFormAd, !isActive);
+  } else {
+    var articleAd = sectionMap.querySelector('.map__card');
+    removeArticle(articleAd);
+    var pins = divMapPin.querySelectorAll('.map__pin');
+    for (var i = 1; i < pins.length; i++) {
+      divMapPin.removeChild(pins[i]);
+    }
+    formAd.reset();
+    buttonMainPin.style.left = buttonMainPinInitialCoords.x;
+    buttonMainPin.style.top = buttonMainPinInitialCoords.y;
+    defineFormAddress(buttonMainPin, !isActive);
+    selectRoomNumber.setCustomValidity('');
+    deactivateElements(fieldsetsFormAd, isActive);
+    sectionMap.classList.add('map--faded');
+    formAd.classList.add('ad-form--disabled');
+    listenMainPin();
   }
 };
 
@@ -269,15 +317,145 @@ var showPins = function () {
 };
 
 var onButtonMainPinMouseup = function () {
-  activatePage();
-  elementFormAddress.value = defineFormAddress(buttonMainPin, false);
+  changePageMode(true);
   buttonMainPin.removeEventListener('mouseup', onButtonMainPinMouseup);
   showPins();
 };
 
+var getSelected = function (select) {
+  return select.options[select.selectedIndex].value;
+};
+
+var setMinPrice = function () {
+  // Получение минимальной цены для типа жилья
+  var minPrice = MIN_PRICE_TYPE_PRICE[getSelected(selectType)];
+  // Установка атрибутам min и placeholder полученного значения для поля формы price
+  inputPrice.min = minPrice;
+  inputPrice.placeholder = minPrice;
+};
+
+var setTime = function (element, newValue) {
+  element.value = newValue;
+};
+
+var getErrorRoom = function (room) {
+  var errorMessage = '';
+  switch (room) {
+    case '1':
+      errorMessage += 'в 1 комнате размещается 1 гость';
+      break;
+    case '2':
+      errorMessage += 'в 2 комнатах размещаются 2 и менее гостей';
+      break;
+    case '3':
+      errorMessage += 'в 3 комнатах размещаются 3 и менее гостей';
+      break;
+    case '100':
+      errorMessage += 'для 100 комнат выберите «не для гостей»';
+      break;
+  }
+
+  return errorMessage;
+};
+
+var getErrorGuest = function (guest) {
+  var errorMessage = '';
+  switch (guest) {
+    case '1':
+      errorMessage += '1 гость размещается в 1, 2 или 3 комнатах';
+      break;
+    case '2':
+      errorMessage += '2 гостя размещаются в 2 или 3 комнатах';
+      break;
+    case '3':
+      errorMessage += '3 гостя размещаются в 3 комнатах';
+      break;
+    case '0':
+      errorMessage += 'для «не для гостей» выберите 100 комнат';
+      break;
+  }
+
+  return errorMessage;
+};
+
+var checkCapacity = function () {
+  var room = getSelected(selectRoomNumber);
+  var guest = getSelected(selectCapacity);
+  if ((room < guest) || (room !== '100' & guest === '0') || (room === '100' & guest !== '0')) {
+    selectRoomNumber.setCustomValidity('Измените количество комнат: ' +
+      getErrorRoom(room) + ' - или гостей: ' + getErrorGuest(guest));
+  } else {
+    selectRoomNumber.setCustomValidity('');
+  }
+};
+
+var sendForm = function () {
+  if (formAd.isValid()) {
+    formAd.submit();
+    PAGE_MODE = false;
+    changePageMode(PAGE_MODE);
+    divSuccess.classList.remove('hidden');
+  }
+};
+
+var clearForm = function () {
+  PAGE_MODE = false;
+  changePageMode(PAGE_MODE);
+};
+
+// Определение адреса сервера для отправки формы
+formAd.action = URL;
 // Предварительная деактивация полей формы
-deactivateElements(fieldsetsFormAd, true);
+deactivateElements(fieldsetsFormAd, !PAGE_MODE);
 // Определение адреса по умолчанию по координатам главной метки
-elementFormAddress.value = defineFormAddress(buttonMainPin, true);
+defineFormAddress(buttonMainPin, PAGE_MODE);
 // Обработчик события mouseup главной метки
-buttonMainPin.addEventListener('mouseup', onButtonMainPinMouseup);
+listenMainPin();
+// Изменение минимальной цены в зависимости от типа жилья
+setMinPrice();
+selectType.addEventListener('change', function () {
+  setMinPrice();
+});
+// Синхронизация заезда и выезда
+// Если меняется значение заезда на value, то надо поменять выезд на тот же value
+inputTimeIn.addEventListener('change', function () {
+  setTime(inputTimeOut, getSelected(inputTimeIn));
+});
+// И наоборот
+inputTimeOut.addEventListener('change', function () {
+  setTime(inputTimeIn, getSelected(inputTimeOut));
+});
+
+// Синхронизация комнат и гостей
+checkCapacity(selectRoomNumber);
+selectRoomNumber.addEventListener('change', function () {
+  checkCapacity();
+});
+
+selectCapacity.addEventListener('change', function () {
+  checkCapacity();
+});
+
+buttonSubmit.addEventListener('click', function (evt) {
+  sendForm();
+  evt.preventDefault();
+});
+
+buttonSubmit.addEventListener('keyup', function (evt) {
+  if (evt.keyCode === ENTER_KEY) {
+    sendForm();
+  }
+  evt.preventDefault();
+});
+
+buttonReset.addEventListener('click', function (evt) {
+  clearForm();
+  evt.preventDefault();
+});
+
+buttonReset.addEventListener('keyup', function (evt) {
+  if (evt.keyCode === ENTER_KEY) {
+    clearForm();
+  }
+  evt.preventDefault();
+});
