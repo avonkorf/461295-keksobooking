@@ -1,6 +1,7 @@
 'use strict';
 
 (function () {
+  var MAX_QUANTITY = 5;
   var mapPinBlockElement = document.querySelector('.map__pins');
   // Создание DOM-элемента метки с использованием шаблона на основе объекта объявления
   var createPinElement = function (ad) {
@@ -32,18 +33,31 @@
     });
   };
 
+  var getQuantity = function (quantity) {
+    return quantity >= MAX_QUANTITY ? MAX_QUANTITY : quantity;
+  };
+
   // Формирование фрагмента из DOM-элементов меток
   window.adPins = {
     create: function () {
       // Отрисовка сгенерированных DOM-элементов меток в блок .map__pins
-      mapPinBlockElement.appendChild(renderPins(window.ads));
+      // mapPinBlockElement.appendChild(renderPins(window.ads));
+      var ads = [];
+      var adsQuantity = getQuantity(window.backend.data.length);
+
+      for (var j = 0; j < adsQuantity; j++) {
+        ads.push(window.backend.data[j]);
+      }
+
+      mapPinBlockElement.appendChild(renderPins(ads));
       // Отбор созданных меток
       var pins = mapPinBlockElement.querySelectorAll('.map__pin');
       // Добавление обработчиков на созданные метки
       // Принимаем, что объявления в массиве хранятся в порядке отрисовки меток
       // pins[0] - это главная метка mainPin
       for (var i = 1; i < pins.length; i++) {
-        addClickListener(pins[i], window.ads[i - 1]);
+        // addClickListener(pins[i], window.ads[i - 1]);
+        addClickListener(pins[i], window.backend.data[i - 1]);
       }
     },
     remove: function () {

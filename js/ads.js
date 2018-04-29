@@ -42,5 +42,6 @@
   };
 
   // Создание массива меток
-  window.ads = createAds(window.data);
+  // window.ads = createAds(window.data);
+  window.ads = window.data;
 })();
