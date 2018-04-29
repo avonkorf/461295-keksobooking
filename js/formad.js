@@ -8,9 +8,6 @@
     'palace': 10000
   };
   var ENTER_KEY = 13;
-  var URL = 'https://js.dump.academy/keksobooking';
-
-  var successMessageElement = document.querySelector('.success');
 
   var adFormElement = document.querySelector('.ad-form');
 
@@ -22,9 +19,6 @@
 
   var submitElement = adFormElement.querySelector('.ad-form__submit');
   var resetElement = adFormElement.querySelector('.ad-form__reset');
-
-  // Определение адреса сервера для отправки формы
-  adFormElement.action = URL;
 
   var getSelected = function (select) {
     return select.options[select.selectedIndex].value;
@@ -101,14 +95,6 @@
     element.value = newValue;
   };
 
-  var sendForm = function () {
-    if (adFormElement.isValid()) {
-      adFormElement.submit();
-      window.bookingpage.deactivate();
-      successMessageElement.classList.remove('hidden');
-    }
-  };
-
   var onTypeElementChange = function () {
     setMinPrice();
   };
@@ -130,27 +116,27 @@
   };
 
   var onSubmitElementClick = function (evt) {
-    sendForm();
     evt.preventDefault();
+    window.backend.sendForm();
   };
 
   var onResetElementClick = function (evt) {
-    window.bookingpage.deactivate();
     evt.preventDefault();
+    window.bookingpage.deactivate();
   };
 
   var onResetElementKeyup = function (evt) {
+    evt.preventDefault();
     if (evt.keyCode === ENTER_KEY) {
       window.bookingpage.deactivate();
     }
-    evt.preventDefault();
   };
 
   var onSubmitElementKeyup = function (evt) {
-    if (evt.keyCode === ENTER_KEY) {
-      sendForm();
-    }
     evt.preventDefault();
+    if (evt.keyCode === ENTER_KEY) {
+      window.backend.sendForm();
+    }
   };
 
   var setElementsListeners = function () {
@@ -178,11 +164,27 @@
   };
 
   window.formAd = {
+    element: adFormElement,
     activate: function () {
       this.setAddress(true);
       adFormElement.classList.remove('ad-form--disabled');
       changeElementsMode(false);
       setElementsListeners();
+    },
+    checkValidity: function () {
+      var result = true;
+      var elements = adFormElement.elements;
+
+      for (var i = 0; i < elements.length; i++) {
+        if (!elements[i].checkValidity()) {
+          elements[i].style.border = '3px solid red';
+          result = false;
+        } else {
+          elements[i].style.border = '';
+        }
+      }
+
+      return result;
     },
     deactivate: function () {
       adFormElement.reset();

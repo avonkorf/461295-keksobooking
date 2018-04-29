@@ -11,15 +11,17 @@
 
   window.bookingpage = {
     activate: function () {
-      activateMap();
-      window.adPins.create();
       window.formAd.activate();
+      activateMap();
+      window.formFilter.activate();
+      window.adPins.create();
     },
     deactivate: function () {
-      window.adCard.remove();
+      window.adCard.close();
       window.adPins.remove();
       window.mainPin.setInitialCoords();
       deactivateMap();
+      window.formFilter.deactivate();
       window.formAd.deactivate();
       window.mainPin.deactivateMoving();
       window.mainPin.listenMouseUp();

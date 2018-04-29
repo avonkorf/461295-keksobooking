@@ -1,6 +1,7 @@
 'use strict';
 
 (function () {
+  var ESC_KEYCODE = 27;
   var TYPES = {
     'flat': 'Квартира',
     'house': 'Дом',
@@ -52,21 +53,32 @@
     return fragmentElement;
   };
 
+  var onDocumentEscPress = function (evt) {
+    if (evt.keyCode === ESC_KEYCODE) {
+      removeCard();
+    }
+  };
+
+  var removeCard = function () {
+    var articleAd = window.globalvar.mapElement.querySelector('.map__card');
+    if (articleAd) {
+      window.globalvar.mapElement.removeChild(articleAd);
+      document.removeEventListener('keydown', onDocumentEscPress);
+    }
+  };
+
   window.adCard = {
-    remove: function () {
-      var articleAd = window.globalvar.mapElement.querySelector('.map__card');
-      if (articleAd) {
-        window.globalvar.mapElement.removeChild(articleAd);
-      }
-    },
     close: function () {
       var popupCloseElement = document.querySelector('.popup__close');
+
       popupCloseElement.addEventListener('click', function () {
-        window.adCard.remove();
+        removeCard();
       });
+
+      document.addEventListener('keydown', onDocumentEscPress);
     },
     open: function (ad) {
-      this.remove();
+      removeCard();
       window.globalvar.mapElement.insertBefore(renderCard(ad), window.globalvar.mapElement.querySelector('.map__filters-container'));
     }
   };
