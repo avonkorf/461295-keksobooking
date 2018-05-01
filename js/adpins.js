@@ -1,13 +1,14 @@
 'use strict';
-
+// Модуль обработки дополнительных меток
 (function () {
-  var MAX_QUANTITY = 5;
   var mapPinBlockElement = document.querySelector('.map__pins');
-  // Создание DOM-элемента метки с использованием шаблона на основе объекта объявления
+  // Создание DOM-элемента метки с использованием объекта объявления
   var createPinElement = function (ad) {
+    // Копирование шаблона
     var pinElement = window.globalvar.templateElement.content.querySelector('.map__pin').cloneNode(true);
-    var pinPictureElement = pinElement.querySelector('img');
 
+    var pinPictureElement = pinElement.querySelector('img');
+    // Заполнение данными
     pinPictureElement.src = ad.author.avatar;
     pinPictureElement.alt = ad.offer.title;
     pinElement.style.left = ad.location.x - Math.ceil(pinElement.offsetLeft / 2) + 'px';
@@ -17,11 +18,12 @@
   };
 
   var renderPins = function (ads) {
+    // Создание фрагмента
     var fragmentElement = document.createDocumentFragment();
-
-    for (var i = 0; i < ads.length; i++) {
-      fragmentElement.appendChild(createPinElement(ads[i]));
-    }
+    // Создание меток и добавление во фрагмент
+    ads.forEach(function (ad) {
+      fragmentElement.appendChild(createPinElement(ad));
+    });
 
     return fragmentElement;
   };
@@ -29,26 +31,13 @@
   var addClickListener = function (element, ad) {
     element.addEventListener('click', function () {
       window.adCard.open(ad);
-      window.adCard.close();
     });
   };
 
-  var getQuantity = function (quantity) {
-    return quantity >= MAX_QUANTITY ? MAX_QUANTITY : quantity;
-  };
-
-  // Формирование фрагмента из DOM-элементов меток
   window.adPins = {
-    create: function () {
+    // Создание меток
+    create: function (ads) {
       // Отрисовка сгенерированных DOM-элементов меток в блок .map__pins
-      // mapPinBlockElement.appendChild(renderPins(window.ads));
-      var ads = [];
-      var adsQuantity = getQuantity(window.backend.data.length);
-
-      for (var j = 0; j < adsQuantity; j++) {
-        ads.push(window.backend.data[j]);
-      }
-
       mapPinBlockElement.appendChild(renderPins(ads));
       // Отбор созданных меток
       var pins = mapPinBlockElement.querySelectorAll('.map__pin');
@@ -57,9 +46,10 @@
       // pins[0] - это главная метка mainPin
       for (var i = 1; i < pins.length; i++) {
         // addClickListener(pins[i], window.ads[i - 1]);
-        addClickListener(pins[i], window.backend.data[i - 1]);
+        addClickListener(pins[i], ads[i - 1]);
       }
     },
+    // Удаление меток
     remove: function () {
       var pins = mapPinBlockElement.querySelectorAll('.map__pin');
       for (var i = 1; i < pins.length; i++) {
