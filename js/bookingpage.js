@@ -14,10 +14,10 @@
       window.formAd.activate();
       activateMap();
       window.formFilter.activate();
-      window.adPins.create();
+      window.formFilter.filterInitialPins();
     },
     deactivate: function () {
-      window.adCard.close();
+      window.adCard.remove();
       window.adPins.remove();
       window.mainPin.setInitialCoords();
       deactivateMap();

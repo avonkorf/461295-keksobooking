@@ -1,110 +1,71 @@
 'use strict';
-
+// Модуль для работы с формой заполнения объявлений
 (function () {
-  var MIN_TYPE_PRICE = {
+  // Константы и словари
+  var ENTER_KEY = 13;
+  var minPriceToType = {
     'bungalo': 0,
     'flat': 1000,
     'house': 5000,
     'palace': 10000
   };
-  var ENTER_KEY = 13;
-
+  var errorToRoomNumber = {
+    '1': 'в 1 комнате размещается 1 гость',
+    '2': 'в 2 комнатах размещаются 2 и менее гостей',
+    '3': 'в 3 комнатах размещаются 3 и менее гостей',
+    '100': 'для 100 комнат выберите «не для гостей»'
+  };
+  var errorToGuestNumber = {
+    '1': '1 гость размещается в 1, 2 или 3 комнатах',
+    '2': '2 гостя размещаются в 2 или 3 комнатах',
+    '3': '3 гостя размещаются в 3 комнатах',
+    '0': 'для количества мест «не для гостей» выберите 100 комнат'
+  };
+  // Основные элементы формы заполнения объявлений
   var adFormElement = document.querySelector('.ad-form');
-
   var timeInElement = adFormElement.querySelector('#timein');
   var timeOutElement = adFormElement.querySelector('#timeout');
   var typeElement = adFormElement.querySelector('#type');
   var roomNumberElement = adFormElement.querySelector('#room_number');
   var capacityElement = adFormElement.querySelector('#capacity');
-
+  var fieldsetElements = adFormElement.querySelectorAll('fieldset');
   var submitElement = adFormElement.querySelector('.ad-form__submit');
   var resetElement = adFormElement.querySelector('.ad-form__reset');
-
-  var getSelected = function (select) {
-    return select.options[select.selectedIndex].value;
-  };
-
-  var changeElementsMode = function (isNotActive) {
-    var fieldsetElements = adFormElement.querySelectorAll('fieldset');
-    for (var i = 0; i < fieldsetElements.length; i++) {
-      fieldsetElements[i].disabled = isNotActive;
-    }
-  };
-
-  var getErrorRoom = function (room) {
-    var errorMessage = '';
-    switch (room) {
-      case '1':
-        errorMessage += 'в 1 комнате размещается 1 гость';
-        break;
-      case '2':
-        errorMessage += 'в 2 комнатах размещаются 2 и менее гостей';
-        break;
-      case '3':
-        errorMessage += 'в 3 комнатах размещаются 3 и менее гостей';
-        break;
-      case '100':
-        errorMessage += 'для 100 комнат выберите «не для гостей»';
-        break;
-    }
-
-    return errorMessage;
-  };
-
-  var getErrorGuest = function (guest) {
-    var errorMessage = '';
-    switch (guest) {
-      case '1':
-        errorMessage += '1 гость размещается в 1, 2 или 3 комнатах';
-        break;
-      case '2':
-        errorMessage += '2 гостя размещаются в 2 или 3 комнатах';
-        break;
-      case '3':
-        errorMessage += '3 гостя размещаются в 3 комнатах';
-        break;
-      case '0':
-        errorMessage += 'для «не для гостей» выберите 100 комнат';
-        break;
-    }
-
-    return errorMessage;
-  };
-
+  // Проверка соответствия количеств комнат и гостей
   var checkCapacity = function () {
-    var room = getSelected(roomNumberElement);
-    var guest = getSelected(capacityElement);
+    var room = window.formUtils.getSelected(roomNumberElement);
+    var guest = window.formUtils.getSelected(capacityElement);
     if ((room < guest) || (room !== '100' & guest === '0') || (room === '100' & guest !== '0')) {
       roomNumberElement.setCustomValidity('Измените количество комнат: ' +
-        getErrorRoom(room) + ' - или гостей: ' + getErrorGuest(guest));
+        errorToRoomNumber[room] + ' - или гостей: ' + errorToGuestNumber[guest]);
     } else {
       roomNumberElement.setCustomValidity('');
     }
   };
-
+  // Установка цены в зависимости от выбранного типа жилья
   var setMinPrice = function () {
     var priceElement = adFormElement.querySelector('#price');
     // Получение минимальной цены для типа жилья
-    var minPrice = MIN_TYPE_PRICE[getSelected(typeElement)];
+    var minPrice = minPriceToType[window.formUtils.getSelected(typeElement)];
     // Установка атрибутам min и placeholder полученного значения для поля формы price
     priceElement.min = minPrice;
     priceElement.placeholder = minPrice;
   };
-
+  // Всмопомогательная функция для синхронизации времен заезда и выезда
   var setTime = function (element, newValue) {
     element.value = newValue;
   };
-
+  // Обработчик событий
   var onTypeElementChange = function () {
     setMinPrice();
   };
 
   var onTimeInElementChange = function () {
-    setTime(timeOutElement, getSelected(timeInElement));
+    setTime(timeOutElement, window.formUtils.getSelected(timeInElement));
   };
 
   var onTimeOutElementChange = function () {
-    setTime(timeInElement, getSelected(timeOutElement));
+    setTime(timeInElement, window.formUtils.getSelected(timeOutElement));
   };
 
   var onRoomNumberElementChange = function () {
@@ -138,7 +99,7 @@
       window.backend.sendForm();
     }
   };
-
+  // Для удобства вынесем все установки событий в отдельную функцию
   var setElementsListeners = function () {
     typeElement.addEventListener('change', onTypeElementChange);
     timeInElement.addEventListener('change', onTimeInElementChange);
@@ -150,7 +111,7 @@
     resetElement.addEventListener('click', onResetElementClick);
     resetElement.addEventListener('keyup', onResetElementKeyup);
   };
-
+  // Для удобства вынесем все удаления событий в отдельную функцию
   var removeElementsListeners = function () {
     typeElement.removeEventListener('change', onTypeElementChange);
     timeInElement.removeEventListener('change', onTimeInElementChange);
@@ -164,13 +125,16 @@
   };
 
   window.formAd = {
+    // Свойство элемента формы
     element: adFormElement,
+    // Метод активации формы
     activate: function () {
       this.setAddress(true);
       adFormElement.classList.remove('ad-form--disabled');
-      changeElementsMode(false);
+      window.formUtils.changeElementsMode(fieldsetElements, false);
       setElementsListeners();
     },
+    // Метод валидации формы
     checkValidity: function () {
       var result = true;
       var elements = adFormElement.elements;
@@ -186,14 +150,16 @@
 
       return result;
     },
+    // Метод деактиктивации формы
     deactivate: function () {
       adFormElement.reset();
       this.setAddress(false);
       // надо бы сбросить проверки полей
       removeElementsListeners();
       adFormElement.classList.add('ad-form--disabled');
-      changeElementsMode(true);
+      window.formUtils.changeElementsMode(fieldsetElements, true);
     },
+    // Метод установки адерса по координатам главной метки
     setAddress: function (isPageActive) {
       var address = null;
 
@@ -205,8 +171,9 @@
 
       adFormElement.querySelector('#address').value = address.abscissa + ', ' + address.ordinata;
     },
+    // Метод установки начальных настроек формы
     setInitialMode: function () {
-      changeElementsMode(true);
+      window.formUtils.changeElementsMode(fieldsetElements, true);
       this.setAddress(false);
       setMinPrice();
       checkCapacity();

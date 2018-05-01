@@ -1,7 +1,7 @@
 'use strict';
 
-window.globalvar = (function () {
-  return {
+(function () {
+  window.globalvar = {
     mapElement: document.querySelector('.map'),
     templateElement: document.querySelector('template')
   };
