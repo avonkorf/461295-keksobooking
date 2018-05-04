@@ -1,18 +1,25 @@
 'use strict';
-
+// Модуль для обработки главной метки
 (function () {
-  var INITIAL_COORDINATES = {
-    abscissa: 570,
-    ordinata: 375
+  // Начальные координаты и границы карты
+  var InitialCoordinate = {
+    ABSCISSA: 570,
+    ORDINATA: 375
   };
 
-  var MOVING_VERTICAL_BORDERS = {
-    minOrdinata: 150,
-    maxOrdinata: 500
+  var Border = {
+    MIN_ABSCISSA: 0,
+    MIN_ORDINATA: 150,
+    MAX_ORDINATA: 500
   };
 
-  var mainPinElement = window.globalvar.mapElement.querySelector('.map__pin--main');
-
+  var mainPinElement = document.querySelector('.map__pin--main');
+  // Конструктор для создания координат
+  var Coordinate = function (abscissa, ordinata) {
+    this.abscissa = abscissa;
+    this.ordinata = ordinata;
+  };
+  // Вычисление размеров
   var getSize = function () {
     return {
       width: mainPinElement.offsetWidth,
@@ -21,46 +28,38 @@
       heightHalf: Math.ceil(mainPinElement.offsetHeight / 2)
     };
   };
-  /*
-  var getInitialAbscissa = function () {
-    var mapLeftBorder = window.globalvar.mapElement.offsetLeft;
-    return mapLeftBorder + window.globalvar.mapElement.offsetWidth + getSize().widthHalf;
-  };
- */
+  // Определение границ передвижения
   var getMovingZone = function () {
-    var mapLeftBorder = window.globalvar.mapElement.offsetLeft;
-    var mapTopBorder = window.globalvar.mapElement.offsetTop;
-
     return {
-      minAbscissa: mapLeftBorder,
-      maxAbscissa: mapLeftBorder + window.globalvar.mapElement.offsetWidth,
-      minOrdinata: mapTopBorder + MOVING_VERTICAL_BORDERS.minOrdinata,
-      maxOrdinata: mapTopBorder + MOVING_VERTICAL_BORDERS.maxOrdinata
+      minAbscissa: Border.MIN_ABSCISSA,
+      maxAbscissa: Border.MIN_ABSCISSA + window.bookingpage.mapElement.offsetWidth,
+      minOrdinata: Border.MIN_ORDINATA,
+      maxOrdinata: Border.MAX_ORDINATA
     };
   };
-
-  var calculateSharpEndCoords = function (abscissaLeft, ordinataTop) {
+  // Вычисление координат острого конца
+  var calculateSharpEndCoordinates = function (abscissaLeft, ordinataTop) {
     var size = getSize();
-    return {
-      abscissa: abscissaLeft + size.widthHalf,
-      ordinata: ordinataTop + size.height
-    };
+    return new Coordinate(abscissaLeft + size.widthHalf, ordinataTop + size.height);
   };
-
-  var isOutOfMovingZone = function (abscissa, ordinata) {
+  // Проверка выхода за границы
+  var checkOutOfMovingZone = function (abscissa, ordinata) {
     var movingZone = getMovingZone();
-    var sharpEndAbscissa = calculateSharpEndCoords(abscissa, ordinata).abscissa;
-    var sharpEndOrdinata = calculateSharpEndCoords(abscissa, ordinata).ordinata;
-    var result = false;
+    var sharpEnd = calculateSharpEndCoordinates(abscissa, ordinata);
 
-    if (movingZone.minAbscissa <= sharpEndAbscissa && sharpEndAbscissa <= movingZone.maxAbscissa &&
-      movingZone.minOrdinata <= sharpEndOrdinata && sharpEndOrdinata <= movingZone.maxOrdinata) {
-      result = true;
-    }
-
-    return result;
+    return (
+      movingZone.minAbscissa <= sharpEnd.abscissa &&
+      sharpEnd.abscissa <= movingZone.maxAbscissa &&
+      movingZone.minOrdinata <= sharpEnd.ordinata &&
+      sharpEnd.ordinata <= movingZone.maxOrdinata
+    ) ? true : false;
   };
-
+  // Установка положения главной метки
+  var setPosition = function (abscissa, ordinata) {
+    mainPinElement.style.left = abscissa + 'px';
+    mainPinElement.style.top = ordinata + 'px';
+  };
+  // Обработчики событий
   var onMainPinElementMouseup = function () {
     window.bookingpage.activate();
     mainPinElement.removeEventListener('mouseup', onMainPinElementMouseup);
@@ -69,30 +68,21 @@
   var onMainPinElementMouseDown = function (evt) {
     evt.preventDefault();
 
-    var startCoords = {
-      x: evt.clientX,
-      y: evt.clientY
-    };
+    var startCoordinates = new Coordinate(evt.clientX, evt.clientY);
 
     var onDocumentMouseMove = function (moveEvt) {
       moveEvt.preventDefault();
 
-      var shift = {
-        x: startCoords.x - moveEvt.clientX,
-        y: startCoords.y - moveEvt.clientY
-      };
+      var shift = new Coordinate(startCoordinates.abscissa - moveEvt.clientX,
+          startCoordinates.ordinata - moveEvt.clientY);
 
-      var newOffsetLeft = mainPinElement.offsetLeft - shift.x;
-      var newOffsetTop = mainPinElement.offsetTop - shift.y;
+      var newOffsetLeft = mainPinElement.offsetLeft - shift.abscissa;
+      var newOffsetTop = mainPinElement.offsetTop - shift.ordinata;
 
-      if (isOutOfMovingZone(newOffsetLeft, newOffsetTop)) {
-        startCoords = {
-          x: moveEvt.clientX,
-          y: moveEvt.clientY
-        };
+      if (checkOutOfMovingZone(newOffsetLeft, newOffsetTop)) {
+        startCoordinates = new Coordinate(moveEvt.clientX, moveEvt.clientY);
 
-        mainPinElement.style.top = newOffsetTop + 'px';
-        mainPinElement.style.left = newOffsetLeft + 'px';
+        setPosition(newOffsetLeft, newOffsetTop);
 
         window.formAd.setAddress(true);
       }
@@ -110,31 +100,30 @@
   };
 
   window.mainPin = {
-    activateMoving: function () {
-      mainPinElement.addEventListener('mousedown', onMainPinElementMouseDown);
-    },
+    // Метод деактивации drag'n'drop
     deactivateMoving: function () {
       mainPinElement.removeEventListener('mousedown', onMainPinElementMouseDown);
     },
-    getCentreCoords: function () {
+    // Метод определения координат центра метки
+    getCentreCoordinates: function () {
       var size = getSize();
-      return {
-        abscissa: mainPinElement.offsetLeft + size.widthHalf,
-        ordinata: mainPinElement.offsetTop + size.heightHalf
-      };
+      return new Coordinate(mainPinElement.offsetLeft + size.widthHalf,
+          mainPinElement.offsetTop + size.heightHalf);
     },
-    getSharpEndCoords: function () {
-      return {
-        abscissa: calculateSharpEndCoords(mainPinElement.offsetLeft, mainPinElement.offsetTop).abscissa,
-        ordinata: calculateSharpEndCoords(mainPinElement.offsetLeft, mainPinElement.offsetTop).ordinata
-      };
+    // Метод определения текущих координат острого конца метки
+    getSharpEndCoordinates: function () {
+      var sharpEnd = calculateSharpEndCoordinates(mainPinElement.offsetLeft, mainPinElement.offsetTop);
+      return new Coordinate(sharpEnd.abscissa, sharpEnd.ordinata);
     },
-    listenMouseUp: function () {
+    // Метод для добавления события на первое действие главной метки
+    // и активации drag'n'drop
+    listen: function () {
       mainPinElement.addEventListener('mouseup', onMainPinElementMouseup);
+      mainPinElement.addEventListener('mousedown', onMainPinElementMouseDown);
     },
-    setInitialCoords: function () {
-      mainPinElement.style.left = INITIAL_COORDINATES.abscissa + 'px';
-      mainPinElement.style.top = INITIAL_COORDINATES.ordinata + 'px';
+    // Метод установки начальных координат главной метки
+    setInitialPosition: function () {
+      setPosition(InitialCoordinate.ABSCISSA, InitialCoordinate.ORDINATA);
     }
   };
 })();

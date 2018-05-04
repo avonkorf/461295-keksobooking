@@ -20,7 +20,7 @@
     }
   };
   // Основные элементы формы фильтров
-  var filterFormElement = window.globalvar.mapElement.querySelector('.map__filters');
+  var filterFormElement = document.querySelector('.map__filters');
   var typeElement = filterFormElement.querySelector('#housing-type');
   var priceElement = filterFormElement.querySelector('#housing-price');
   var roomsElement = filterFormElement.querySelector('#housing-rooms');
@@ -45,66 +45,66 @@
     window.adPins.remove();
     // Фильтрация
     // Вспомогательная функция для фильтра по удобствам
-    var filterFeature = function (adsData, featureElement) {
-      var array = adsData.offer.features.filter(function (feature) {
+    var filterFeature = function (advert, featureElement) {
+      var filteredFeatures = advert.offer.features.filter(function (feature) {
         return feature === featureElement.value;
       });
-      return featureElement.checked ? array.length > 0 : true;
+      return featureElement.checked ? filteredFeatures.length > 0 : true;
     };
     // Формирование нового массива объявлений с учетом фильтров
     // По нему организовано построение новых меток
-    var adFilter = window.backend.data.
+    var newAds = window.backend.data.
         // Фильтр по типу жилья
-        filter(function (ads) {
+        filter(function (ad) {
           var newType = window.formUtils.getSelected(typeElement);
-          return newType === INITIAL_SELECT_VALUE ? true : ads.offer.type === newType;
+          return newType === INITIAL_SELECT_VALUE ? true : ad.offer.type === newType;
         }).
         // Фильтр по цене
-        filter(function (ads) {
+        filter(function (ad) {
           var newPrice = window.formUtils.getSelected(priceElement);
           return newPrice === INITIAL_SELECT_VALUE ? true :
-            priceRangeToPriceElementValue[newPrice].minValue <= ads.offer.price &&
-            ads.offer.price <= priceRangeToPriceElementValue[newPrice].maxValue;
+            priceRangeToPriceElementValue[newPrice].minValue <= ad.offer.price &&
+            ad.offer.price <= priceRangeToPriceElementValue[newPrice].maxValue;
         }).
         // Фильтр по количеству комнат
-        filter(function (ads) {
+        filter(function (ad) {
           var newRoomsQuantity = window.formUtils.getSelected(roomsElement);
           return newRoomsQuantity === INITIAL_SELECT_VALUE ? true :
-            ads.offer.rooms === parseInt(newRoomsQuantity, 10);
+            ad.offer.rooms === parseInt(newRoomsQuantity, 10);
         }).
         // Фильтр по количеству гостей
-        filter(function (ads) {
+        filter(function (ad) {
           var newGuestsQuantity = window.formUtils.getSelected(guestsElement);
           return newGuestsQuantity === INITIAL_SELECT_VALUE ? true :
-            ads.offer.guests === parseInt(newGuestsQuantity, 10);
+            ad.offer.guests === parseInt(newGuestsQuantity, 10);
         }).
         // Фильтры по удобствам
-        filter(function (ads) {
+        filter(function (ad) {
           var featureWifiElement = featuresElement.querySelector('#filter-wifi');
-          return filterFeature(ads, featureWifiElement);
+          return filterFeature(ad, featureWifiElement);
         }).
-        filter(function (ads) {
+        filter(function (ad) {
           var featureDishwasherElement = featuresElement.querySelector('#filter-dishwasher');
-          return filterFeature(ads, featureDishwasherElement);
+          return filterFeature(ad, featureDishwasherElement);
         }).
-        filter(function (ads) {
+        filter(function (ad) {
           var featureParkingElement = featuresElement.querySelector('#filter-parking');
-          return filterFeature(ads, featureParkingElement);
+          return filterFeature(ad, featureParkingElement);
         }).
-        filter(function (ads) {
+        filter(function (ad) {
           var featureWasherElement = featuresElement.querySelector('#filter-washer');
-          return filterFeature(ads, featureWasherElement);
+          return filterFeature(ad, featureWasherElement);
         }).
-        filter(function (ads) {
+        filter(function (ad) {
           var featureElevatorElement = featuresElement.querySelector('#filter-elevator');
-          return filterFeature(ads, featureElevatorElement);
+          return filterFeature(ad, featureElevatorElement);
         }).
-        filter(function (ads) {
+        filter(function (ad) {
           var featureConditionerElement = featuresElement.querySelector('#filter-conditioner');
-          return filterFeature(ads, featureConditionerElement);
+          return filterFeature(ad, featureConditionerElement);
         });
     // Отрисовка меток c новыми данными
-    window.adPins.create(getAds(adFilter));
+    window.adPins.create(getAds(newAds));
   };
   // Удаление "дребезга"
   var lastTimeout;

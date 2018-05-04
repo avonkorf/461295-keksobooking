@@ -1,10 +1,9 @@
 'use strict';
-
+// Главный модуль запуска
 (function () {
-  window.mainPin.setInitialCoords();
+  window.mainPin.setInitialPosition();
   window.formAd.setInitialMode();
   window.formFilter.deactivate();
   window.backend.load();
-  window.mainPin.activateMoving();
-  window.mainPin.listenMouseUp();
+  window.mainPin.listen();
 })();

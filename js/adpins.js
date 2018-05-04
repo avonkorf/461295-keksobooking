@@ -5,7 +5,7 @@
   // Создание DOM-элемента метки с использованием объекта объявления
   var createPinElement = function (ad) {
     // Копирование шаблона
-    var pinElement = window.globalvar.templateElement.content.querySelector('.map__pin').cloneNode(true);
+    var pinElement = document.querySelector('template').content.querySelector('.map__pin').cloneNode(true);
 
     var pinPictureElement = pinElement.querySelector('img');
     // Заполнение данными

@@ -86,14 +86,14 @@
     window.bookingpage.deactivate();
   };
 
-  var onResetElementKeyup = function (evt) {
+  var onResetElementEnterPress = function (evt) {
     evt.preventDefault();
     if (evt.keyCode === ENTER_KEY) {
       window.bookingpage.deactivate();
     }
   };
 
-  var onSubmitElementKeyup = function (evt) {
+  var onSubmitElementEnterPress = function (evt) {
     evt.preventDefault();
     if (evt.keyCode === ENTER_KEY) {
       window.backend.sendForm();
@@ -107,9 +107,9 @@
     roomNumberElement.addEventListener('change', onRoomNumberElementChange);
     capacityElement.addEventListener('change', onCapacityElementfunctionChange);
     submitElement.addEventListener('click', onSubmitElementClick);
-    submitElement.addEventListener('keyup', onSubmitElementKeyup);
+    submitElement.addEventListener('keyup', onSubmitElementEnterPress);
     resetElement.addEventListener('click', onResetElementClick);
-    resetElement.addEventListener('keyup', onResetElementKeyup);
+    resetElement.addEventListener('keyup', onResetElementEnterPress);
   };
   // Для удобства вынесем все удаления событий в отдельную функцию
   var removeElementsListeners = function () {
@@ -119,9 +119,9 @@
     roomNumberElement.removeEventListener('change', onRoomNumberElementChange);
     capacityElement.removeEventListener('change', onCapacityElementfunctionChange);
     submitElement.removeEventListener('click', onSubmitElementClick);
-    submitElement.removeEventListener('keyup', onSubmitElementKeyup);
+    submitElement.removeEventListener('keyup', onSubmitElementEnterPress);
     resetElement.removeEventListener('click', onResetElementClick);
-    resetElement.removeEventListener('keyup', onResetElementKeyup);
+    resetElement.removeEventListener('keyup', onResetElementEnterPress);
   };
 
   window.formAd = {
@@ -135,12 +135,12 @@
       setElementsListeners();
     },
     // Метод валидации формы
-    checkValidity: function () {
+    checkValidity: function (isPageActive) {
       var result = true;
       var elements = adFormElement.elements;
 
       for (var i = 0; i < elements.length; i++) {
-        if (!elements[i].checkValidity()) {
+        if (!elements[i].checkValidity() && isPageActive === true) {
           elements[i].style.border = '3px solid red';
           result = false;
         } else {
@@ -153,6 +153,7 @@
     // Метод деактиктивации формы
     deactivate: function () {
       adFormElement.reset();
+      this.checkValidity(false);
       this.setAddress(false);
       // надо бы сбросить проверки полей
       removeElementsListeners();
@@ -164,9 +165,9 @@
       var address = null;
 
       if (isPageActive) {
-        address = window.mainPin.getSharpEndCoords();
+        address = window.mainPin.getSharpEndCoordinates();
       } else {
-        address = window.mainPin.getCentreCoords();
+        address = window.mainPin.getCentreCoordinates();
       }
 
       adFormElement.querySelector('#address').value = address.abscissa + ', ' + address.ordinata;

@@ -4,7 +4,7 @@
   // Константы
   var URL_DATA = 'https://js.dump.academy/keksobooking/data';
   var URL_FORM = 'https://js.dump.academy/keksobooking';
-  var TIMEOUT = 10000;
+  var TIMEOUT = 2000;
   var SUCCESS_MESSAGE = 200;
   // Отрисовка ошибок при работе с сервером
   var getError = function (errorMessage) {
@@ -64,7 +64,7 @@
       });
 
       xhr.addEventListener('timeout', function () {
-        getError('Данные объявлений не загружены с сервера за ' + xhr.timeout + 'мс');
+        getError('Данные объявлений не загружены с сервера за ' + Math.ceil(xhr.timeout / 1000) + 'с');
       });
 
       xhr.timeout = TIMEOUT;
@@ -74,7 +74,7 @@
     },
     // Метод отправки данных на сервер
     sendForm: function () {
-      if (window.formAd.checkValidity()) {
+      if (window.formAd.checkValidity(true)) {
         var xhr = new XMLHttpRequest();
 
         xhr.addEventListener('load', function () {

@@ -14,7 +14,7 @@
     // Создание фрагмента
     var fragmentElement = document.createDocumentFragment();
     // Копирование шаблона
-    var cardElement = window.globalvar.templateElement.content.querySelector('.map__card').cloneNode(true);
+    var cardElement = document.querySelector('template').content.querySelector('.map__card').cloneNode(true);
     // Заполнение данными
     // Заголовок
     cardElement.querySelector('.popup__title').textContent = ad.offer.title;
@@ -31,10 +31,10 @@
     cardElement.querySelector('.popup__text--time').textContent = 'Заезд после ' +
       ad.offer.checkin + ', выезд до ' + ad.offer.checkout;
     // Удобства
-    var featuresBlockElement = cardElement.querySelectorAll('.popup__feature');
+    var featureElements = cardElement.querySelectorAll('.popup__feature');
     // Сначала скроем все удобства
-    for (var i = 0; i < featuresBlockElement.length; i++) {
-      featuresBlockElement[i].classList.add('visually-hidden');
+    for (var i = 0; i < featureElements.length; i++) {
+      featureElements[i].classList.add('visually-hidden');
     }
     // Покажем только те, которые есть в объявлении
     for (i = 0; i < ad.offer.features.length; i++) {
@@ -75,17 +75,17 @@
     // Метод открытия объявления
     open: function (ad) {
       this.remove();
-      window.globalvar.mapElement.insertBefore(renderCard(ad),
-          window.globalvar.mapElement.querySelector('.map__filters-container'));
+      window.bookingpage.mapElement.insertBefore(renderCard(ad),
+          window.bookingpage.mapElement.querySelector('.map__filters-container'));
       var popupCloseElement = document.querySelector('.popup__close');
       popupCloseElement.addEventListener('click', onPopupCloseElementClick);
       document.addEventListener('keydown', onDocumentEscPress);
     },
     // Метод удаления объявления, если таковое открыто
     remove: function () {
-      var articleAd = window.globalvar.mapElement.querySelector('.map__card');
-      if (articleAd) {
-        window.globalvar.mapElement.removeChild(articleAd);
+      var articleAdElement = window.bookingpage.mapElement.querySelector('.map__card');
+      if (articleAdElement) {
+        window.bookingpage.mapElement.removeChild(articleAdElement);
         document.removeEventListener('keydown', onDocumentEscPress);
       }
     }
