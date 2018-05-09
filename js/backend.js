@@ -4,7 +4,7 @@
   // Константы
   var URL_DATA = 'https://js.dump.academy/keksobooking/data';
   var URL_FORM = 'https://js.dump.academy/keksobooking';
-  var TIMEOUT = 2000;
+  var TIMEOUT = 10000;
   var SUCCESS_MESSAGE = 200;
   // Отрисовка ошибок при работе с сервером
   var getError = function (errorMessage) {
@@ -53,7 +53,9 @@
 
       xhr.addEventListener('load', function () {
         if (xhr.status === SUCCESS_MESSAGE) {
-          setData(xhr.response);
+          var ads = xhr.response;
+          setData(ads);
+          window.formFilter.filterInitialPins(ads);
         } else {
           getError('Ошибка при выгрузке данных с сервера: ' + xhr.status + ' ' + xhr.statusText);
         }

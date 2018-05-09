@@ -18,7 +18,7 @@
       window.formAd.activate();
       activateMap();
       window.formFilter.activate();
-      window.formFilter.filterInitialPins();
+      window.backend.load();
     },
     // Деактивация страницы
     deactivate: function () {

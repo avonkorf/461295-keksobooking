@@ -165,8 +165,8 @@
       window.formUtils.changeElementsMode(filterFormElement.elements, true);
     },
     // Метод создания дополнительных меток с учетом неустановленных фильтров и ограничения по количеству меток
-    filterInitialPins: function () {
-      window.adPins.create(getAds(window.backend.data));
+    filterInitialPins: function (data) {
+      window.adPins.create(getAds(data));
     }
   };
 })();
