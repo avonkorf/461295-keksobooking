@@ -45,7 +45,6 @@
       // Принимаем, что объявления в массиве хранятся в порядке отрисовки меток
       // pins[0] - это главная метка mainPin
       for (var i = 1; i < pins.length; i++) {
-        // addClickListener(pins[i], window.ads[i - 1]);
         addClickListener(pins[i], ads[i - 1]);
       }
     },

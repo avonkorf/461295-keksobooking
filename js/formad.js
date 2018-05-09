@@ -9,42 +9,79 @@
     'house': 5000,
     'palace': 10000
   };
-  var errorToRoomNumber = {
-    '1': 'в 1 комнате размещается 1 гость',
-    '2': 'в 2 комнатах размещаются 2 и менее гостей',
-    '3': 'в 3 комнатах размещаются 3 и менее гостей',
-    '100': 'для 100 комнат выберите «не для гостей»'
-  };
-  var errorToGuestNumber = {
-    '1': '1 гость размещается в 1, 2 или 3 комнатах',
-    '2': '2 гостя размещаются в 2 или 3 комнатах',
-    '3': '3 гостя размещаются в 3 комнатах',
-    '0': 'для количества мест «не для гостей» выберите 100 комнат'
-  };
   // Основные элементы формы заполнения объявлений
   var adFormElement = document.querySelector('.ad-form');
+  var titleElement = adFormElement.querySelector('#title');
   var timeInElement = adFormElement.querySelector('#timein');
   var timeOutElement = adFormElement.querySelector('#timeout');
   var typeElement = adFormElement.querySelector('#type');
+  var priceElement = adFormElement.querySelector('#price');
   var roomNumberElement = adFormElement.querySelector('#room_number');
   var capacityElement = adFormElement.querySelector('#capacity');
   var fieldsetElements = adFormElement.querySelectorAll('fieldset');
   var submitElement = adFormElement.querySelector('.ad-form__submit');
   var resetElement = adFormElement.querySelector('.ad-form__reset');
-  // Проверка соответствия количеств комнат и гостей
-  var checkCapacity = function () {
-    var room = window.formUtils.getSelected(roomNumberElement);
-    var guest = window.formUtils.getSelected(capacityElement);
-    if ((room < guest) || (room !== '100' & guest === '0') || (room === '100' & guest !== '0')) {
-      roomNumberElement.setCustomValidity('Измените количество комнат: ' +
-        errorToRoomNumber[room] + ' - или гостей: ' + errorToGuestNumber[guest]);
+  // Изменение цвета рамки
+  var setBorderColor = function (element, color) {
+    element.style.border = color;
+  };
+  // Подсветка проблемного поля и установка пользовательского сообщения
+  var setElementCheckResult = function (element, errorMessage) {
+    if (errorMessage !== '') {
+      element.setCustomValidity(errorMessage);
+      setBorderColor(element, '3px solid red');
     } else {
-      roomNumberElement.setCustomValidity('');
+      element.setCustomValidity('');
+      setBorderColor(element, '');
+    }
+  };
+  // Проверка заголовка
+  var checkTitle = function () {
+    if (titleElement.validity.tooShort || titleElement.validity.tooLong) {
+      setElementCheckResult(titleElement, 'Длина заголовка равна ' + titleElement.value.length +
+        '. Она должна содержать от ' + titleElement.minLength + ' до ' + titleElement.maxLength + ' символов');
+    } else {
+      setElementCheckResult(titleElement, '');
+    }
+  };
+  // Проверка цены
+  var checkPrice = function () {
+    if (priceElement.validity.rangeUnderflow) {
+      setElementCheckResult(priceElement, 'Для выбранного типа жилья выберите цену от ' + priceElement.min);
+    } else {
+      setElementCheckResult(priceElement, '');
+    }
+  };
+  // Проверка соответствия количеств комнат и гостей
+  var checkCapacity = function (room, guest) {
+    return ((room < guest) || (room !== '100' & guest === '0') ||
+      (room === '100' & guest !== '0')) ? false : true;
+  };
+  // Синхронизация количества гостей с количетством комнат
+  var setCapacity = function () {
+    // Определяем выбранное количество комнат
+    var room = window.formUtils.getSelected(roomNumberElement);
+    // Определяем выбранный на текущий момент option
+    var selectedCapacityElement = capacityElement.options[capacityElement.selectedIndex];
+    // Получаем список всех опций по количеству гостей
+    var options = capacityElement.options;
+    // Устанавливаем флаг о том, что выбранный элемент прошел проверку синхронизации
+    // чтобы в дальнейшем оставить его выбранным
+    var currentCapacityCheckResult = checkCapacity(room, selectedCapacityElement.value) ? true : false;
+    for (var i = 0; i < options.length; i++) {
+      var capacityCheckResult = checkCapacity(room, options[i].value);
+      if (!currentCapacityCheckResult && capacityCheckResult) {
+        // Если подходящая опция еще не выбрана, то выбираем ее
+        selectedCapacityElement.selected = false;
+        options[i].selected = true;
+        currentCapacityCheckResult = true;
+      }
+      // Если опция не прошла проверку синхронизации, то деакивируем ее
+      options[i].disabled = capacityCheckResult ? false : true;
     }
   };
   // Установка цены в зависимости от выбранного типа жилья
   var setMinPrice = function () {
-    var priceElement = adFormElement.querySelector('#price');
     // Получение минимальной цены для типа жилья
     var minPrice = minPriceToType[window.formUtils.getSelected(typeElement)];
     // Установка атрибутам min и placeholder полученного значения для поля формы price
@@ -55,9 +92,17 @@
   var setTime = function (element, newValue) {
     element.value = newValue;
   };
-  // Обработчик событий
+  // Обработчики событий
+  var onTitleElementInput = function () {
+    checkTitle();
+  };
+
   var onTypeElementChange = function () {
     setMinPrice();
+  };
+
+  var onPriceElementInput = function () {
+    checkPrice();
   };
 
   var onTimeInElementChange = function () {
@@ -69,11 +114,7 @@
   };
 
   var onRoomNumberElementChange = function () {
-    checkCapacity();
-  };
-
-  var onCapacityElementfunctionChange = function () {
-    checkCapacity();
+    setCapacity();
   };
 
   var onSubmitElementClick = function (evt) {
@@ -101,11 +142,12 @@
   };
   // Для удобства вынесем все установки событий в отдельную функцию
   var setElementsListeners = function () {
+    titleElement.addEventListener('input', onTitleElementInput);
     typeElement.addEventListener('change', onTypeElementChange);
+    priceElement.addEventListener('input', onPriceElementInput);
     timeInElement.addEventListener('change', onTimeInElementChange);
     timeOutElement.addEventListener('change', onTimeOutElementChange);
     roomNumberElement.addEventListener('change', onRoomNumberElementChange);
-    capacityElement.addEventListener('change', onCapacityElementfunctionChange);
     submitElement.addEventListener('click', onSubmitElementClick);
     submitElement.addEventListener('keyup', onSubmitElementEnterPress);
     resetElement.addEventListener('click', onResetElementClick);
@@ -113,11 +155,12 @@
   };
   // Для удобства вынесем все удаления событий в отдельную функцию
   var removeElementsListeners = function () {
+    titleElement.removeEventListener('input', onTitleElementInput);
     typeElement.removeEventListener('change', onTypeElementChange);
+    priceElement.removeEventListener('input', onPriceElementInput);
     timeInElement.removeEventListener('change', onTimeInElementChange);
     timeOutElement.removeEventListener('change', onTimeOutElementChange);
     roomNumberElement.removeEventListener('change', onRoomNumberElementChange);
-    capacityElement.removeEventListener('change', onCapacityElementfunctionChange);
     submitElement.removeEventListener('click', onSubmitElementClick);
     submitElement.removeEventListener('keyup', onSubmitElementEnterPress);
     resetElement.removeEventListener('click', onResetElementClick);
@@ -141,10 +184,10 @@
 
       for (var i = 0; i < elements.length; i++) {
         if (!elements[i].checkValidity() && isPageActive === true) {
-          elements[i].style.border = '3px solid red';
+          setBorderColor(elements[i], '3px solid red');
           result = false;
         } else {
-          elements[i].style.border = '';
+          setBorderColor(elements[i], '');
         }
       }
 
@@ -154,21 +197,14 @@
     deactivate: function () {
       adFormElement.reset();
       this.checkValidity(false);
-      this.setAddress(false);
-      // надо бы сбросить проверки полей
       removeElementsListeners();
+      this.setInitialMode();
       adFormElement.classList.add('ad-form--disabled');
-      window.formUtils.changeElementsMode(fieldsetElements, true);
     },
     // Метод установки адерса по координатам главной метки
     setAddress: function (isPageActive) {
-      var address = null;
-
-      if (isPageActive) {
-        address = window.mainPin.getSharpEndCoordinates();
-      } else {
-        address = window.mainPin.getCentreCoordinates();
-      }
+      var address = isPageActive ? window.mainPin.getSharpEndCoordinates() :
+        window.mainPin.getCentreCoordinates();
 
       adFormElement.querySelector('#address').value = address.abscissa + ', ' + address.ordinata;
     },
@@ -177,7 +213,7 @@
       window.formUtils.changeElementsMode(fieldsetElements, true);
       this.setAddress(false);
       setMinPrice();
-      checkCapacity();
+      setCapacity();
     }
   };
 })();
